@@ -12,18 +12,15 @@ int request(int processid,int req[]);
 int release(int processid,int rel[]);
 int safetyCheck();
 int *safeq;
-
 void *pcode(void *P);
-int main(int argc,char const *argv[])
+main()
 {
-	
-	
+	//input of number of resources and processes
 printf("Number of Processes:   ");
-
-scanf("%d",&R);
-printf("Number of Resources are:   ");
-
 scanf("%d",&P);
+	
+printf("Number of Resources are:   ");
+scanf("%d",&R);
 
 //available size
 available = (int *)malloc(R * sizeof(*available));
@@ -96,14 +93,13 @@ pthread_t processes[P];
         pthread_attr_t attr;
 
         pthread_attr_init(&attr);
-	int processNumber[P];
-	for(i=0; i<P; i++) processNumber[i] = i;
+	int processnumber[P];
+	for(i=0; i<P; i++) processnumber[i] = i;
         for(i=0; i<P; i++)
-                pthread_create(&processes[i], &attr, pcode, (void *)(&processNumber[i]));
+                pthread_create(&processes[i], &attr, pcode, (void *)(&processnumber[i]));
         for(i=0; i<P; i++)
                 pthread_join(processes[i], NULL);
         printf("\nTask completed\n");	
-return 0;
 }
 void *pcode(void *P)
 {
@@ -169,212 +165,103 @@ int request(int P,int req[])
         if(req[j]>need[P][j])
 
         {
-
-            printf("Error! Request is more than need. Request Denied.\n");
-
+ printf("Error! Request is more than need. Request Denied.\n");
             flag = -1;
-
             break;
-
         }
-
     }
-
     if (flag == 0) {
-
         for (j=0;j<R;j++) {
-
             if(req[j]>available[j])
-
             {
-
                 printf("Resources are not available now,P(%d)must wait.\n",P);
-
                 flag = -1;
-
             }
-
         }
-
         if(flag==0){
-
             for (j=0; j<R; j++) {
-
                 available[j]-=req[j];
-
                 allocation[P][j]+=req[j];
-
                 need[P][j]-=req[j];
-
-            }
-
+	    }
             if(safetyCheck()==1)
-
                 printf("Safe!!Allocation done.\n");
-
             else
-
-            {
-
+	    {
                 printf("Error!!!unsafe!wait....\n",P);
-
                 for (j=0; j<R; j++) {
-
                     available[j]+=req[j];
-
                     allocation[P][j]-=req[j];
-
                     need[P][j]+=req[j];
-
                 }
-
                 flag=-1;
-
             }
-
-
-
         }
-
     }
-
     return flag;
-
 }
 int release(int P,int rel[])
 {
     int j,flag;
-
     flag=0;
-
     for (j=0; j<R; j++) {
-
         if(allocation[P][j]<rel[j])
-
         {
-
             printf("\nResources can not be released.\n",P);
-
             flag = -1;
-
             break;
-
         }
-
     }
-
     for (j=0;j<R;j++) {
-
         if (flag==0) {
-
             available[j]+=rel[j];
-
             allocation[P][j]-=rel[j];
-
             need[P][j]+=rel[j];
-
         }
-
     }
-
     if (flag==0) {
-
         printf("\nResources have been released.\n");
-
     }
-
     else
-
     {
-
         printf("Error! Resources cannot be released.\n");
-
     }
-
     return flag;
-
-
-
 }
 int safetyCheck()
 
 {
-
-
-	// get safe sequence
-
-        int tempRes[R];
-
-        for(i=0; i<R; i++) tempRes[i] = available[i];
-
-
-
+        int temp[R];
+        for(i=0; i<R; i++) temp[i] = available[i];
         bool finished[P];
-
         for(i=0; i<P; i++) finished[i] = false;
-
         int nfinished=0;
-
         while(nfinished < P) {
-
                 bool safe = false;
-
-
-
                 for(i=0; i<P; i++) {
-
-                        if(!finished[i]) {
-
-                                bool possible = true;
-
-
-
-                                for(j=0; j<R; j++)
-
-                                        if(need[i][j] > tempRes[j]) {
-
-                                                possible = false;
-
-                                                break;
-
-                                        }
-
-
-
-                                if(possible) {
-
-                                        for(j=0; j<R; j++)
-
-                                                tempRes[j] += allocation[i][j];
-
-                                        safeq[nfinished] = i;
-
-                                        finished[i] = true;
-
-                                        ++nfinished;
-
-                                        safe = true;
-
-                                }
-
-                        }
-
+                    if(!finished[i]) {
+                        bool possible = true;
+                        for(j=0; j<R; j++)
+                        if(need[i][j] > temp[j]) {
+                            possible = false;
+                            break;
+                       }
+						if(possible) {
+                            for(j=0; j<R; j++)
+                            temp[j] += allocation[i][j];
+                        safeq[nfinished] = i;
+	                    finished[i] = true;
+                        ++nfinished;
+                        safe = true;
+                       }
+                   }
                 }
-
-
-
                 if(!safe) {
 
                         for(k=0; k<P; k++) safeq[k] = -1;
-
-                        return false; // no safe sequence found
-
+                        return false; // if no safe sequence is there
                 }
-
         }
-
         return true; // safe sequence found
-
-
 }
 
